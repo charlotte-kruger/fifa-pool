@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Office FIFA Pool 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --pitch-dark: #0f3d21;
+    --pitch-mid: #1f7d44;
+    --pitch-light: #27a356;
+    --chalk: #f5f5f0;
+    --chalk-dim: #c8c8c0;
+    --gold: #f0c040;
+    --gold-dim: #c9982a;
+    --red-card: #e03030;
+    --panel: #0d2b18;
+    --panel-raise: #122e1c;
+    --panel-border: #1e4a2a;
+    --text: #f0ede6;
+    --text-dim: #8fa898;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--pitch-dark); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.5; min-height: 100vh; }
+
+  header {
+    background: var(--pitch-dark);
+    border-bottom: 2px solid var(--pitch-light);
+    padding: 16px 24px;
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  header h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(20px,4vw,34px); letter-spacing: .06em; color: var(--gold); line-height: 1; }
+  header h1 span { color: var(--chalk); }
+  .header-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); text-align: right; }
+  #last-updated { color: var(--gold-dim); }
+
+  .page-body { display: grid; grid-template-columns: 1fr 290px; gap: 0; max-width: 1280px; margin: 0 auto; padding: 24px 16px; align-items: start; }
+  @media(max-width:860px){ .page-body { grid-template-columns:1fr; } .sidebar { order:-1; margin-bottom:20px; } }
+  .main-col { min-width:0; padding-right:22px; }
+  @media(max-width:860px){ .main-col { padding-right:0; } }
+
+  #loading-msg { text-align:center; padding:60px 20px; font-family:'Bebas Neue',sans-serif; font-size:26px; color:var(--text-dim); letter-spacing:.08em; }
+  .spinner { display:inline-block; width:26px; height:26px; border:3px solid var(--panel-border); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; vertical-align:middle; margin-right:10px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* POOLS */
+  #pools-section { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-bottom:28px; }
+  @media(max-width:1050px){ #pools-section { grid-template-columns:1fr; } }
+
+  .pool-card { background:var(--panel); border:1px solid var(--panel-border); border-radius:10px; overflow:hidden; display:flex; flex-direction:column; }
+
+  .pool-header { padding:16px 16px 12px; text-align:center; border-bottom:1px solid var(--panel-border); }
+  .pool-name { font-family:'Bebas Neue',sans-serif; font-size:30px; letter-spacing:.06em; line-height:1; margin-bottom:10px; }
+  .pool-card[data-owner="Charlotte"] .pool-name { color:#4a90d9; }
+  .pool-card[data-owner="Nick"] .pool-name { color:#e07040; }
+  .pool-card[data-owner="Sophie"] .pool-name { color:#9b59b6; }
+
+  .pool-score-box { display:inline-block; border:2px solid var(--gold); border-radius:8px; padding:7px 18px; margin-bottom:10px; background:rgba(240,192,64,.07); }
+  .pool-score-label { font-size:10px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); display:block; }
+  .pool-score-value { font-family:'Bebas Neue',sans-serif; font-size:40px; color:var(--gold); line-height:1; display:block; }
+
+  .btn-breakdown { display:block; width:100%; background:var(--panel-raise); border:1px solid var(--panel-border); border-radius:6px; color:var(--chalk-dim); font-size:11px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; cursor:pointer; padding:8px 12px; transition:background .15s,color .15s,border-color .15s; text-align:center; font-family:'Inter',sans-serif; }
+  .btn-breakdown:hover { background:var(--pitch-mid); color:var(--chalk); border-color:var(--pitch-light); }
+
+  .pool-teams { padding:10px; flex:1; }
+  .team-btn { display:flex; align-items:center; gap:6px; width:100%; background:none; border:none; border-radius:5px; padding:5px 7px; cursor:pointer; color:var(--text); font-family:'Inter',sans-serif; font-size:13px; text-align:left; transition:background .12s; margin-bottom:2px; }
+  .team-btn:hover { background:var(--panel-raise); }
+  .team-btn.active { background:var(--panel-raise); outline:1px solid var(--panel-border); }
+  .team-name-text { flex:1; }
+  .team-pts { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--gold); font-weight:600; }
+
+  /* BREAKDOWN */
+  .breakdown-section { background:var(--panel); border:1px solid var(--panel-border); border-radius:10px; padding:20px; margin-bottom:28px; display:none; scroll-margin-top:80px; }
+  .breakdown-section.visible { display:block; }
+  .breakdown-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:.06em; color:var(--gold); margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; }
+  .btn-close { background:none; border:1px solid var(--panel-border); color:var(--text-dim); border-radius:4px; padding:4px 10px; font-size:12px; cursor:pointer; font-family:'Inter',sans-serif; }
+  .btn-close:hover { border-color:var(--red-card); color:var(--red-card); }
+
+  .breakdown-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .breakdown-table th { text-align:left; padding:7px 10px; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text-dim); border-bottom:1px solid var(--panel-border); }
+  .breakdown-table td { padding:6px 10px; border-bottom:1px solid rgba(255,255,255,.04); font-size:12px; vertical-align:middle; }
+  .breakdown-table tr:last-child td { border-bottom:none; }
+  .breakdown-table tbody tr:hover td { background:var(--panel-raise); }
+  .breakdown-table tfoot td { border-top:1px solid var(--panel-border); padding:8px 10px; }
+  .td-mono { font-family:'JetBrains Mono',monospace; }
+  .td-pts { font-family:'JetBrains Mono',monospace; color:var(--gold); font-weight:600; }
+  .c-win { color:#4caf50; font-weight:600; }
+  .c-loss { color:var(--red-card); }
+  .c-draw { color:var(--gold); font-weight:600; }
+  .c-winot { color:#7ecac4; font-weight:600; }
+  .c-losot { color:#e08060; }
+  .no-data { color:var(--text-dim); font-style:italic; font-size:12px; padding:8px 0; }
+
+  /* TEAM DETAIL */
+  #team-detail { background:var(--panel); border:1px solid var(--panel-border); border-radius:10px; padding:20px; margin-bottom:28px; display:none; scroll-margin-top:80px; }
+  #team-detail.visible { display:block; }
+  .detail-header { display:flex; align-items:center; gap:12px; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid var(--panel-border); }
+  .detail-name { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:.06em; color:var(--chalk); }
+  .detail-owner { font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.1em; }
+  .detail-total { font-family:'JetBrains Mono',monospace; font-size:22px; color:var(--gold); font-weight:700; margin-left:auto; }
+
+  .detail-cols { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media(max-width:660px){ .detail-cols { grid-template-columns:1fr; } }
+  .detail-col-title { font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; }
+
+  .match-row { padding:8px 10px; border-radius:6px; background:var(--panel-raise); margin-bottom:5px; font-size:12px; }
+  .match-line1 { display:flex; align-items:center; gap:8px; }
+  .match-date { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim); min-width:70px; }
+  .match-vs { flex:1; }
+  .match-score { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; }
+  .match-pts-badge { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; background:rgba(240,192,64,.15); color:var(--gold); border-radius:4px; padding:2px 7px; min-width:28px; text-align:center; }
+  .match-venue { font-size:10px; color:var(--text-dim); margin-top:2px; }
+
+  .upcoming-row { padding:8px 10px; border-radius:6px; background:var(--panel-raise); border-left:3px solid var(--pitch-light); margin-bottom:5px; }
+  .upcoming-date { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--gold-dim); }
+  .upcoming-matchup { font-size:13px; font-weight:500; margin:2px 0; }
+  .upcoming-venue { font-size:10px; color:var(--text-dim); }
+
+  /* SIDEBAR */
+  .sidebar { position:sticky; top:76px; }
+  .sidebar-card { background:var(--panel); border:1px solid var(--panel-border); border-radius:10px; overflow:hidden; }
+  .sidebar-title { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:.06em; color:var(--gold); padding:12px 14px 10px; border-bottom:1px solid var(--panel-border); }
+
+  .calendar-nav { display:flex; align-items:center; justify-content:space-between; padding:9px 12px; border-bottom:1px solid var(--panel-border); }
+  .cal-month-label { font-family:'Bebas Neue',sans-serif; font-size:15px; letter-spacing:.08em; color:var(--chalk); }
+  .cal-nav-btn { background:none; border:1px solid var(--panel-border); color:var(--text-dim); border-radius:4px; width:24px; height:24px; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; transition:background .12s; }
+  .cal-nav-btn:hover { background:var(--panel-raise); color:var(--chalk); }
+  .cal-nav-btn:disabled { opacity:.3; cursor:default; }
+
+  .calendar-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; padding:7px 8px; }
+  .cal-dow { text-align:center; font-size:9px; font-weight:700; letter-spacing:.08em; color:var(--text-dim); text-transform:uppercase; padding-bottom:3px; }
+  .cal-day { text-align:center; padding:4px 1px; border-radius:4px; font-size:11px; cursor:default; color:var(--text-dim); line-height:1.3; }
+  .cal-day.has-matches { cursor:pointer; color:var(--chalk); background:var(--panel-raise); font-weight:600; }
+  .cal-day.has-matches:hover { background:var(--pitch-dark); border:1px solid var(--pitch-light); }
+  .cal-day.today { border:1px solid var(--gold-dim); }
+  .cal-day.selected { background:var(--pitch-mid) !important; color:var(--chalk) !important; border:1px solid var(--pitch-light) !important; }
+  .cal-day.dimmed { opacity:.22; pointer-events:none; }
+  .cal-day.empty { visibility:hidden; }
+  .cal-dot { width:4px; height:4px; background:var(--gold); border-radius:50%; margin:1px auto 0; }
+
+  .day-panel { padding:10px 12px 14px; border-top:1px solid var(--panel-border); }
+  .day-panel-title { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text-dim); margin-bottom:7px; }
+  .day-match-item { padding:7px 9px; border-radius:6px; background:var(--panel-raise); margin-bottom:5px; font-size:11px; }
+  .day-match-time { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--gold-dim); }
+  .day-match-teams { font-weight:500; color:var(--chalk); margin:2px 0; font-size:12px; }
+  .day-match-score { font-family:'JetBrains Mono',monospace; color:var(--gold); font-size:12px; font-weight:600; }
+  .day-match-meta { font-size:10px; color:var(--text-dim); }
+
+  .points-legend { padding:10px 12px 12px; border-top:1px solid var(--panel-border); }
+  .legend-title { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text-dim); margin-bottom:7px; }
+  .legend-row { display:flex; justify-content:space-between; padding:3px 0; font-size:11px; color:var(--text-dim); border-bottom:1px solid rgba(255,255,255,.03); }
+  .legend-pts { font-family:'JetBrains Mono',monospace; color:var(--gold); font-weight:600; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Office <span>FIFA Pool</span> 2026</h1>
+  <div class="header-meta">
+    <div>June 11 &ndash; July 19, 2026</div>
+    <div>Updated: <span id="last-updated">Loading&hellip;</span></div>
+  </div>
+</header>
+
+<div class="page-body">
+  <div class="main-col">
+    <div id="loading-msg"><span class="spinner"></span> Loading World Cup data&hellip;</div>
+
+    <div id="pools-section" style="display:none"></div>
+
+    <div id="breakdown-Charlotte" class="breakdown-section">
+      <div class="breakdown-title">Charlotte &mdash; Point Breakdown <button class="btn-close" onclick="closeBreakdown('Charlotte')">&#x2715; Close</button></div>
+      <div id="bd-content-Charlotte"></div>
+    </div>
+    <div id="breakdown-Nick" class="breakdown-section">
+      <div class="breakdown-title">Nick &mdash; Point Breakdown <button class="btn-close" onclick="closeBreakdown('Nick')">&#x2715; Close</button></div>
+      <div id="bd-content-Nick"></div>
+    </div>
+    <div id="breakdown-Sophie" class="breakdown-section">
+      <div class="breakdown-title">Sophie &mdash; Point Breakdown <button class="btn-close" onclick="closeBreakdown('Sophie')">&#x2715; Close</button></div>
+      <div id="bd-content-Sophie"></div>
+    </div>
+
+    <div id="team-detail">
+      <div class="detail-header">
+        <div>
+          <div class="detail-name" id="detail-name"></div>
+          <div class="detail-owner" id="detail-owner"></div>
+        </div>
+        <div class="detail-total" id="detail-total"></div>
+        <button class="btn-close" onclick="closeDetail()" style="margin-left:12px">&#x2715; Close</button>
+      </div>
+      <div class="detail-cols">
+        <div><div class="detail-col-title">Past Results</div><div id="detail-past"></div></div>
+        <div><div class="detail-col-title">Upcoming Fixtures</div><div id="detail-upcoming"></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="sidebar">
+    <div class="sidebar-card">
+      <div class="sidebar-title">Match Calendar</div>
+      <div class="calendar-nav">
+        <button class="cal-nav-btn" id="cal-prev" onclick="calNav(-1)">&#8249;</button>
+        <div class="cal-month-label" id="cal-month-label"></div>
+        <button class="cal-nav-btn" id="cal-next" onclick="calNav(1)">&#8250;</button>
+      </div>
+      <div class="calendar-grid" id="cal-grid"></div>
+      <div class="day-panel">
+        <div class="day-panel-title" id="day-panel-title">Select a match day</div>
+        <div id="day-matches-list"></div>
+      </div>
+      <div class="points-legend">
+        <div class="legend-title">Point System</div>
+        <div class="legend-row"><span>Win in regulation</span><span class="legend-pts">5 + goals</span></div>
+        <div class="legend-row"><span>Win in OT / penalties</span><span class="legend-pts">4 + goals</span></div>
+        <div class="legend-row"><span>Draw</span><span class="legend-pts">3 + goals</span></div>
+        <div class="legend-row"><span>Loss in OT / penalties</span><span class="legend-pts">2 + goals</span></div>
+        <div class="legend-row"><span>Loss in regulation</span><span class="legend-pts">0 + goals</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// POOL ASSIGNMENTS
+// ─────────────────────────────────────────────
+const POOLS = {
+  Charlotte: { teams: ['Canada','Colombia','Croatia','England','France','Iraq','Ivory Coast','Morocco','Norway','Panama','South Korea','Sweden','Tunisia','Turkey','USA','Uzbekistan'] },
+  Nick:      { teams: ['Argentina','Australia','Belgium','Bosnia and Herzegovina','Brazil','Curacao','Japan','Mexico','Netherlands','Portugal','Qatar','Saudi Arabia','Scotland','South Africa','Spain','Uruguay'] },
+  Sophie:    { teams: ['Algeria','Austria','Cape Verde','Czechia','DR Congo','Ecuador','Egypt','Germany','Ghana','Haiti','Iran','Jordan','New Zealand','Paraguay','Senegal','Switzerland'] }
+};
+
+// Reverse map: canonical name → owner
+const TEAM_OWNER = {};
+for (const [owner, d] of Object.entries(POOLS)) {
+  for (const t of d.teams) TEAM_OWNER[t] = owner;
+}
+
+// ─────────────────────────────────────────────
+// NAME NORMALISATION
+// API team names → pool canonical names
+// ─────────────────────────────────────────────
+const NAME_MAP = {
+  'Czech Republic':        'Czechia',
+  'Bosnia & Herzegovina':  'Bosnia and Herzegovina',
+  'Cura\u00e7ao':          'Curacao',   // Curaçao
+  'C\u00f4te d\'Ivoire':   'Ivory Coast',
+  "Cote d'Ivoire":         'Ivory Coast',
+  'IR Iran':               'Iran',
+  'Republic of Korea':     'South Korea',
+  'Korea Republic':        'South Korea',
+  'T\u00fcrkiye':          'Turkey',    // Türkiye
+  'Turkiye':               'Turkey',
+  'Cabo Verde':            'Cape Verde',
+  'United States':         'USA',
+  'DR Congo':              'DR Congo',
+  'Congo DR':              'DR Congo',
+  'Democratic Republic of Congo': 'DR Congo',
+};
+
+function norm(name) {
+  if (!name) return '';
+  return NAME_MAP[name] || name;
+}
+
+// ─────────────────────────────────────────────
+// SCORING
+// ─────────────────────────────────────────────
+function calcPoints(match, teamName) {
+  const t1 = norm(match.team1);
+  const t2 = norm(match.team2);
+  const isT1 = (t1 === teamName);
+  const isT2 = (t2 === teamName);
+  if (!isT1 && !isT2) return null;
+
+  const score = match.score;
+  if (!score) return null;
+
+  // Use ET score if available (determines actual winner), else FT
+  const result = score.et || score.ft;
+  if (!result) return null;
+
+  const myScore  = isT1 ? result[0] : result[1];
+  const oppScore = isT1 ? result[1] : result[0];
+  const isOT     = !!(score.et || score.p);
+
+  let pts = 0;
+  let resultLabel = '';
+
+  if (myScore > oppScore) {
+    pts = isOT ? 4 : 5;
+    resultLabel = isOT ? 'W (OT)' : 'W';
+  } else if (myScore < oppScore) {
+    pts = isOT ? 2 : 0;
+    resultLabel = isOT ? 'L (OT)' : 'L';
+  } else {
+    pts = 3;
+    resultLabel = 'D';
+  }
+  pts += myScore; // +1 per goal scored
+
+  return { pts, resultLabel, myScore, oppScore, isOT };
+}
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let allMatches = [];
+let selectedDate = null;
+let calViewMonth = { year: 2026, month: 5 }; // June = 5
+
+// ─────────────────────────────────────────────
+// FETCH  (proxy chain, no CORS issues)
+// ─────────────────────────────────────────────
+async function fetchMatches() {
+  // worldcup2026.json lives in the same repo — no CORS needed
+  const urls = [
+    'worldcup2026.json',           // same-origin (GitHub Pages)
+    './worldcup2026.json',         // same-origin relative
+  ];
+  for (const url of urls) {
+    try {
+      const r = await fetch(url);
+      if (!r.ok) continue;
+      const data = await r.json();
+      if (data && data.matches) return data.matches;
+    } catch(e) { /* try next */ }
+  }
+  return null;
+}
+
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+function isPlayed(m) {
+  return !!(m.score && (m.score.ft || m.score.et));
+}
+
+function teamScore(teamName) {
+  let total = 0;
+  for (const m of allMatches) {
+    if (!isPlayed(m)) continue;
+    const r = calcPoints(m, teamName);
+    if (r) total += r.pts;
+  }
+  return total;
+}
+
+function poolScore(owner) {
+  return POOLS[owner].teams.reduce((sum, t) => sum + teamScore(t), 0);
+}
+
+function resultClass(label) {
+  if (label === 'W')       return 'c-win';
+  if (label === 'L')       return 'c-loss';
+  if (label === 'D')       return 'c-draw';
+  if (label === 'W (OT)') return 'c-winot';
+  if (label === 'L (OT)') return 'c-losot';
+  return '';
+}
+
+// ─────────────────────────────────────────────
+// RENDER POOLS
+// ─────────────────────────────────────────────
+function renderPools() {
+  const sec = document.getElementById('pools-section');
+  sec.innerHTML = '';
+  sec.style.display = '';
+
+  for (const [owner, data] of Object.entries(POOLS)) {
+    const total = poolScore(owner);
+    const card = document.createElement('div');
+    card.className = 'pool-card';
+    card.dataset.owner = owner;
+
+    const hdr = document.createElement('div');
+    hdr.className = 'pool-header';
+    hdr.innerHTML =
+      '<div class="pool-name">' + owner + '\'s Pool</div>' +
+      '<div class="pool-score-box">' +
+        '<span class="pool-score-label">Total Points</span>' +
+        '<span class="pool-score-value">' + total + '</span>' +
+      '</div>' +
+      '<button class="btn-breakdown" onclick="showBreakdown(\'' + owner + '\')">Click here for point breakdown</button>';
+    card.appendChild(hdr);
+
+    const list = document.createElement('div');
+    list.className = 'pool-teams';
+    for (const t of data.teams) {
+      const pts = teamScore(t);
+      const btn = document.createElement('button');
+      btn.className = 'team-btn';
+      btn.dataset.team = t;
+      btn.innerHTML =
+        '<span class="team-name-text">' + t + '</span>' +
+        '<span class="team-pts">' + pts + ' pt</span>';
+      btn.onclick = () => showTeamDetail(t, owner);
+      list.appendChild(btn);
+    }
+    card.appendChild(list);
+    sec.appendChild(card);
+  }
+}
+
+// ─────────────────────────────────────────────
+// BREAKDOWN
+// ─────────────────────────────────────────────
+function showBreakdown(owner) {
+  const sec = document.getElementById('breakdown-' + owner);
+  const content = document.getElementById('bd-content-' + owner);
+
+  let rows = '';
+  let grand = 0;
+
+  for (const t of POOLS[owner].teams) {
+    const played = allMatches.filter(m => isPlayed(m) && (norm(m.team1) === t || norm(m.team2) === t));
+    if (played.length === 0) {
+      rows += '<tr>' +
+        '<td>' + t + '</td>' +
+        '<td colspan="4" class="no-data">No results yet</td>' +
+        '<td class="td-pts">0</td>' +
+      '</tr>';
+      continue;
+    }
+    for (const m of played) {
+      const r = calcPoints(m, t);
+      if (!r) continue;
+      grand += r.pts;
+      const opp  = norm(m.team1) === t ? norm(m.team2) : norm(m.team1);
+      const score = r.myScore + '\u2013' + r.oppScore;
+      const basePts = r.pts - r.myScore;
+      rows += '<tr>' +
+        '<td>' + t + '</td>' +
+        '<td class="td-mono">' + (m.date || '') + '</td>' +
+        '<td>vs ' + opp + '</td>' +
+        '<td><span class="' + resultClass(r.resultLabel) + '">' + r.resultLabel + '</span> ' + score + '</td>' +
+        '<td class="td-mono" style="color:var(--chalk-dim)">' + basePts + ' base + ' + r.myScore + ' goals</td>' +
+        '<td class="td-pts">' + r.pts + '</td>' +
+      '</tr>';
+    }
+  }
+
+  content.innerHTML =
+    '<table class="breakdown-table">' +
+      '<thead><tr><th>Team</th><th>Date</th><th>Opponent</th><th>Result</th><th>Calculation</th><th>Pts</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+      '<tfoot><tr>' +
+        '<td colspan="5" style="text-align:right;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim)">Total</td>' +
+        '<td class="td-pts" style="font-size:18px">' + grand + '</td>' +
+      '</tr></tfoot>' +
+    '</table>';
+
+  sec.classList.add('visible');
+  setTimeout(() => sec.scrollIntoView({ behavior:'smooth', block:'start' }), 30);
+}
+
+function closeBreakdown(owner) {
+  document.getElementById('breakdown-' + owner).classList.remove('visible');
+}
+
+// ─────────────────────────────────────────────
+// TEAM DETAIL
+// ─────────────────────────────────────────────
+function showTeamDetail(team, owner) {
+  document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.team-btn[data-team="' + team + '"]').forEach(b => b.classList.add('active'));
+
+  document.getElementById('detail-name').textContent  = team;
+  document.getElementById('detail-owner').textContent = owner + "'s Pool";
+  document.getElementById('detail-total').textContent = teamScore(team) + ' pts';
+
+  // Past results
+  const pastMatches = allMatches.filter(m => isPlayed(m) && (norm(m.team1) === team || norm(m.team2) === team));
+  const pastEl = document.getElementById('detail-past');
+  if (pastMatches.length === 0) {
+    pastEl.innerHTML = '<div class="no-data">No results yet</div>';
+  } else {
+    pastEl.innerHTML = pastMatches.map(m => {
+      const r = calcPoints(m, team);
+      if (!r) return '';
+      const opp   = norm(m.team1) === team ? norm(m.team2) : norm(m.team1);
+      const score = r.myScore + '\u2013' + r.oppScore;
+      const rc    = resultClass(r.resultLabel);
+      return '<div class="match-row">' +
+        '<div class="match-line1">' +
+          '<span class="match-date">' + (m.date || '') + '</span>' +
+          '<span class="match-vs"><strong>' + team + '</strong> vs ' + opp + '</span>' +
+          '<span class="match-score ' + rc + '">' + score + '</span>' +
+          '<span class="match-pts-badge">+' + r.pts + '</span>' +
+        '</div>' +
+        '<div class="match-venue">' + (m.ground || '') + (m.group ? ' &middot; ' + m.group : '') + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // Upcoming
+  const upcomingMatches = allMatches.filter(m => !isPlayed(m) && (norm(m.team1) === team || norm(m.team2) === team));
+  const upEl = document.getElementById('detail-upcoming');
+  if (upcomingMatches.length === 0) {
+    upEl.innerHTML = '<div class="no-data">No upcoming fixtures</div>';
+  } else {
+    upEl.innerHTML = upcomingMatches.map(m => {
+      const opp = norm(m.team1) === team ? norm(m.team2) : norm(m.team1);
+      return '<div class="upcoming-row">' +
+        '<div class="upcoming-date">' + (m.date || '') + (m.time ? ' &middot; ' + m.time : '') + '</div>' +
+        '<div class="upcoming-matchup">' + team + ' vs ' + opp + '</div>' +
+        '<div class="upcoming-venue">' + (m.ground || '') + (m.group ? ' &middot; ' + m.group : '') + (m.round ? ' &middot; ' + m.round : '') + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  const det = document.getElementById('team-detail');
+  det.classList.add('visible');
+  setTimeout(() => det.scrollIntoView({ behavior:'smooth', block:'start' }), 30);
+}
+
+function closeDetail() {
+  document.getElementById('team-detail').classList.remove('visible');
+  document.querySelectorAll('.team-btn').forEach(b => b.classList.remove('active'));
+}
+
+// ─────────────────────────────────────────────
+// CALENDAR
+// ─────────────────────────────────────────────
+function matchDates() {
+  const s = new Set();
+  for (const m of allMatches) { if (m.date) s.add(m.date); }
+  return s;
+}
+
+function renderCalendar() {
+  const dates = matchDates();
+  const { year, month } = calViewMonth;
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  document.getElementById('cal-month-label').textContent =
+    new Date(year, month, 1).toLocaleDateString('en-US', { month:'long', year:'numeric' });
+  document.getElementById('cal-prev').disabled = (year === 2026 && month === 5);
+  document.getElementById('cal-next').disabled = (year === 2026 && month === 6);
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'cal-dow';
+    el.textContent = d;
+    grid.appendChild(el);
+  });
+
+  const firstDow = new Date(year, month, 1).getDay();
+  for (let i = 0; i < firstDow; i++) {
+    const el = document.createElement('div'); el.className = 'cal-day empty'; grid.appendChild(el);
+  }
+  const days = new Date(year, month + 1, 0).getDate();
+  for (let d = 1; d <= days; d++) {
+    const ds = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const el = document.createElement('div');
+    el.className = 'cal-day';
+    const inWC = ds >= '2026-06-11' && ds <= '2026-07-19';
+    if (!inWC) el.classList.add('dimmed');
+    if (dates.has(ds)) el.classList.add('has-matches');
+    if (ds === todayStr) el.classList.add('today');
+    if (ds === selectedDate) el.classList.add('selected');
+    el.innerHTML = d + (dates.has(ds) ? '<div class="cal-dot"></div>' : '');
+    if (dates.has(ds)) el.onclick = () => selectDay(ds);
+    grid.appendChild(el);
+  }
+}
+
+function selectDay(ds) {
+  selectedDate = ds;
+  renderCalendar();
+  renderDayMatches(ds);
+}
+
+function renderDayMatches(ds) {
+  const label = new Date(ds + 'T12:00:00').toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+  document.getElementById('day-panel-title').textContent = label;
+
+  const day = allMatches.filter(m => m.date === ds);
+  const el  = document.getElementById('day-matches-list');
+  if (day.length === 0) { el.innerHTML = '<div class="no-data">No matches this day</div>'; return; }
+
+  el.innerHTML = day.map(m => {
+    const t1 = norm(m.team1), t2 = norm(m.team2);
+    const scoreHTML = isPlayed(m)
+      ? '<div class="day-match-score">' +
+          (m.score.ft ? m.score.ft[0] + '\u2013' + m.score.ft[1] : '') +
+          (m.score.et ? ' (ET ' + m.score.et[0] + '\u2013' + m.score.et[1] + ')' : '') +
+          (m.score.p  ? ' (Pens)' : '') +
+        '</div>'
+      : '';
+    return '<div class="day-match-item">' +
+      '<div class="day-match-time">' + (m.time || 'TBD') + '</div>' +
+      '<div class="day-match-teams">' + t1 + ' vs ' + t2 + '</div>' +
+      scoreHTML +
+      '<div class="day-match-meta">' + (m.group || m.round || '') + (m.ground ? ' &middot; ' + m.ground : '') + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function calNav(dir) {
+  let { year, month } = calViewMonth;
+  month += dir;
+  if (month < 0) { month = 11; year--; }
+  if (month > 11) { month = 0; year++; }
+  calViewMonth = { year, month };
+  renderCalendar();
+}
+
+// ─────────────────────────────────────────────
+// FALLBACK DATA (group stage fixtures, no scores)
+// Used only if all CORS proxies fail
+// ─────────────────────────────────────────────
+const FALLBACK = [
+  {round:"Matchday 1",date:"2026-06-11",time:"13:00 UTC-6",team1:"Mexico",team2:"South Africa",group:"Group A",ground:"Mexico City"},
+  {round:"Matchday 1",date:"2026-06-11",time:"20:00 UTC-6",team1:"South Korea",team2:"Czech Republic",group:"Group A",ground:"Guadalajara (Zapopan)"},
+  {round:"Matchday 2",date:"2026-06-12",time:"15:00 UTC-4",team1:"Canada",team2:"Bosnia & Herzegovina",group:"Group B",ground:"Toronto"},
+  {round:"Matchday 2",date:"2026-06-12",time:"18:00 UTC-7",team1:"USA",team2:"Paraguay",group:"Group D",ground:"Los Angeles (Inglewood)"},
+  {round:"Matchday 3",date:"2026-06-13",time:"12:00 UTC-7",team1:"Qatar",team2:"Switzerland",group:"Group B",ground:"San Francisco Bay Area (Santa Clara)"},
+  {round:"Matchday 3",date:"2026-06-13",time:"18:00 UTC-4",team1:"Brazil",team2:"Morocco",group:"Group C",ground:"New York/New Jersey (East Rutherford)"},
+  {round:"Matchday 3",date:"2026-06-13",time:"21:00 UTC-4",team1:"Haiti",team2:"Scotland",group:"Group C",ground:"Boston (Foxborough)"},
+  {round:"Matchday 3",date:"2026-06-13",time:"21:00 UTC-7",team1:"Australia",team2:"Turkey",group:"Group D",ground:"Vancouver"},
+  {round:"Matchday 4",date:"2026-06-14",time:"12:00 UTC-5",team1:"Germany",team2:"Cura\u00e7ao",group:"Group E",ground:"Houston"},
+  {round:"Matchday 4",date:"2026-06-14",time:"15:00 UTC-5",team1:"Netherlands",team2:"Japan",group:"Group F",ground:"Dallas (Arlington)"},
+  {round:"Matchday 4",date:"2026-06-14",time:"19:00 UTC-4",team1:"Ivory Coast",team2:"Ecuador",group:"Group E",ground:"Philadelphia"},
+  {round:"Matchday 4",date:"2026-06-14",time:"20:00 UTC-6",team1:"Sweden",team2:"Tunisia",group:"Group F",ground:"Monterrey (Guadalupe)"},
+  {round:"Matchday 5",date:"2026-06-15",time:"12:00 UTC-4",team1:"Spain",team2:"Cape Verde",group:"Group H",ground:"Atlanta"},
+  {round:"Matchday 5",date:"2026-06-15",time:"12:00 UTC-7",team1:"Belgium",team2:"Egypt",group:"Group G",ground:"Seattle"},
+  {round:"Matchday 5",date:"2026-06-15",time:"18:00 UTC-4",team1:"Saudi Arabia",team2:"Uruguay",group:"Group H",ground:"Miami (Miami Gardens)"},
+  {round:"Matchday 5",date:"2026-06-15",time:"18:00 UTC-7",team1:"Iran",team2:"New Zealand",group:"Group G",ground:"Los Angeles (Inglewood)"},
+  {round:"Matchday 6",date:"2026-06-16",time:"15:00 UTC-4",team1:"France",team2:"Senegal",group:"Group I",ground:"New York/New Jersey (East Rutherford)"},
+  {round:"Matchday 6",date:"2026-06-16",time:"18:00 UTC-4",team1:"Iraq",team2:"Norway",group:"Group I",ground:"Boston (Foxborough)"},
+  {round:"Matchday 6",date:"2026-06-16",time:"20:00 UTC-5",team1:"Argentina",team2:"Algeria",group:"Group J",ground:"Kansas City"},
+  {round:"Matchday 6",date:"2026-06-16",time:"21:00 UTC-7",team1:"Austria",team2:"Jordan",group:"Group J",ground:"San Francisco Bay Area (Santa Clara)"},
+  {round:"Matchday 7",date:"2026-06-17",time:"12:00 UTC-5",team1:"Portugal",team2:"DR Congo",group:"Group K",ground:"Houston"},
+  {round:"Matchday 7",date:"2026-06-17",time:"15:00 UTC-5",team1:"Colombia",team2:"Uzbekistan",group:"Group K",ground:"Dallas (Arlington)"},
+  {round:"Matchday 7",date:"2026-06-17",time:"18:00 UTC-4",team1:"England",team2:"Panama",group:"Group L",ground:"Miami (Miami Gardens)"},
+  {round:"Matchday 7",date:"2026-06-17",time:"21:00 UTC-4",team1:"Croatia",team2:"Ghana",group:"Group L",ground:"New York/New Jersey (East Rutherford)"},
+  {round:"Matchday 8",date:"2026-06-18",time:"12:00 UTC-4",team1:"Czech Republic",team2:"South Africa",group:"Group A",ground:"Atlanta"},
+  {round:"Matchday 8",date:"2026-06-18",time:"12:00 UTC-7",team1:"Switzerland",team2:"Bosnia & Herzegovina",group:"Group B",ground:"Los Angeles (Inglewood)"},
+  {round:"Matchday 8",date:"2026-06-18",time:"15:00 UTC-7",team1:"Canada",team2:"Qatar",group:"Group B",ground:"Vancouver"},
+  {round:"Matchday 8",date:"2026-06-18",time:"19:00 UTC-6",team1:"Mexico",team2:"South Korea",group:"Group A",ground:"Guadalajara (Zapopan)"},
+  {round:"Matchday 9",date:"2026-06-19",time:"12:00 UTC-7",team1:"USA",team2:"Australia",group:"Group D",ground:"Seattle"},
+  {round:"Matchday 9",date:"2026-06-19",time:"18:00 UTC-4",team1:"Scotland",team2:"Morocco",group:"Group C",ground:"Boston (Foxborough)"},
+  {round:"Matchday 9",date:"2026-06-19",time:"21:00 UTC-4",team1:"Brazil",team2:"Haiti",group:"Group C",ground:"Philadelphia"},
+  {round:"Matchday 9",date:"2026-06-19",time:"21:00 UTC-7",team1:"Turkey",team2:"Paraguay",group:"Group D",ground:"San Francisco Bay Area (Santa Clara)"},
+  {round:"Matchday 10",date:"2026-06-20",time:"12:00 UTC-5",team1:"Netherlands",team2:"Sweden",group:"Group F",ground:"Houston"},
+  {round:"Matchday 10",date:"2026-06-20",time:"16:00 UTC-4",team1:"Germany",team2:"Ivory Coast",group:"Group E",ground:"Toronto"},
+  {round:"Matchday 10",date:"2026-06-20",time:"19:00 UTC-5",team1:"Ecuador",team2:"Cura\u00e7ao",group:"Group E",ground:"Kansas City"},
+  {round:"Matchday 10",date:"2026-06-20",time:"22:00 UTC-6",team1:"Tunisia",team2:"Japan",group:"Group F",ground:"Monterrey (Guadalupe)"},
+  {round:"Matchday 11",date:"2026-06-21",time:"12:00 UTC-4",team1:"Spain",team2:"Saudi Arabia",group:"Group H",ground:"Atlanta"},
+  {round:"Matchday 11",date:"2026-06-21",time:"12:00 UTC-7",team1:"Belgium",team2:"Iran",group:"Group G",ground:"Los Angeles (Inglewood)"},
+  {round:"Matchday 11",date:"2026-06-21",time:"18:00 UTC-4",team1:"Uruguay",team2:"Cape Verde",group:"Group H",ground:"Miami (Miami Gardens)"},
+  {round:"Matchday 11",date:"2026-06-21",time:"18:00 UTC-7",team1:"New Zealand",team2:"Egypt",group:"Group G",ground:"Vancouver"},
+  {round:"Matchday 12",date:"2026-06-22",time:"12:00 UTC-5",team1:"Argentina",team2:"Austria",group:"Group J",ground:"Dallas (Arlington)"},
+  {round:"Matchday 12",date:"2026-06-22",time:"17:00 UTC-4",team1:"France",team2:"Iraq",group:"Group I",ground:"Philadelphia"},
+  {round:"Matchday 12",date:"2026-06-22",time:"20:00 UTC-4",team1:"Norway",team2:"Senegal",group:"Group I",ground:"New York/New Jersey (East Rutherford)"},
+  {round:"Matchday 12",date:"2026-06-22",time:"20:00 UTC-7",team1:"Jordan",team2:"Algeria",group:"Group J",ground:"San Francisco Bay Area (Santa Clara)"},
+  {round:"Matchday 13",date:"2026-06-23",time:"12:00 UTC-5",team1:"Uzbekistan",team2:"DR Congo",group:"Group K",ground:"Houston"},
+  {round:"Matchday 13",date:"2026-06-23",time:"15:00 UTC-4",team1:"Croatia",team2:"England",group:"Group L",ground:"New York/New Jersey (East Rutherford)"},
+  {round:"Matchday 13",date:"2026-06-23",time:"19:00 UTC-5",team1:"Colombia",team2:"Portugal",group:"Group K",ground:"Dallas (Arlington)"},
+  {round:"Matchday 13",date:"2026-06-23",time:"19:00 UTC-4",team1:"Ghana",team2:"Panama",group:"Group L",ground:"Miami (Miami Gardens)"},
+  {round:"Matchday 14",date:"2026-06-24",time:"18:00 UTC-4",team1:"Scotland",team2:"Brazil",group:"Group C",ground:"Miami (Miami Gardens)"},
+  {round:"Matchday 14",date:"2026-06-24",time:"18:00 UTC-4",team1:"Morocco",team2:"Haiti",group:"Group C",ground:"Atlanta"},
+  {round:"Matchday 14",date:"2026-06-24",time:"19:00 UTC-6",team1:"Czech Republic",team2:"Mexico",group:"Group A",ground:"Mexico City"},
+  {round:"Matchday 14",date:"2026-06-24",time:"19:00 UTC-6",team1:"South Africa",team2:"South Korea",group:"Group A",ground:"Monterrey (Guadalupe)"},
+  {round:"Matchday 14",date:"2026-06-24",time:"12:00 UTC-7",team1:"Switzerland",team2:"Canada",group:"Group B",ground:"Vancouver"},
+  {round:"Matchday 14",date:"2026-06-24",time:"12:00 UTC-7",team1:"Bosnia & Herzegovina",team2:"Qatar",group:"Group B",ground:"Seattle"},
+  {round:"Matchday 15",date:"2026-06-25",time:"16:00 UTC-4",team1:"Cura\u00e7ao",team2:"Ivory Coast",group:"Group E",ground:"Philadelphia"},
+  {round:"Matchday 15",date:"2026-06-25",time:"16:00 UTC-4",team1:"Ecuador",team2:"Germany",group:"Group E",ground:"New York/New Jersey (East Rutherford)"},
+  {round:"Matchday 15",date:"2026-06-25",time:"18:00 UTC-5",team1:"Japan",team2:"Sweden",group:"Group F",ground:"Dallas (Arlington)"},
+  {round:"Matchday 15",date:"2026-06-25",time:"18:00 UTC-5",team1:"Tunisia",team2:"Netherlands",group:"Group F",ground:"Kansas City"},
+  {round:"Matchday 15",date:"2026-06-25",time:"19:00 UTC-7",team1:"Turkey",team2:"USA",group:"Group D",ground:"Los Angeles (Inglewood)"},
+  {round:"Matchday 15",date:"2026-06-25",time:"19:00 UTC-7",team1:"Paraguay",team2:"Australia",group:"Group D",ground:"San Francisco Bay Area (Santa Clara)"},
+  {round:"Matchday 16",date:"2026-06-26",time:"15:00 UTC-4",team1:"Norway",team2:"France",group:"Group I",ground:"Boston (Foxborough)"},
+  {round:"Matchday 16",date:"2026-06-26",time:"15:00 UTC-4",team1:"Senegal",team2:"Iraq",group:"Group I",ground:"Toronto"},
+  {round:"Matchday 16",date:"2026-06-26",time:"18:00 UTC-6",team1:"Uruguay",team2:"Spain",group:"Group H",ground:"Guadalajara (Zapopan)"},
+  {round:"Matchday 16",date:"2026-06-26",time:"19:00 UTC-5",team1:"Cape Verde",team2:"Saudi Arabia",group:"Group H",ground:"Houston"},
+  {round:"Matchday 16",date:"2026-06-26",time:"20:00 UTC-7",team1:"Egypt",team2:"Iran",group:"Group G",ground:"Seattle"},
+  {round:"Matchday 16",date:"2026-06-26",time:"20:00 UTC-7",team1:"New Zealand",team2:"Belgium",group:"Group G",ground:"Vancouver"},
+  {round:"Matchday 17",date:"2026-06-27",time:"21:00 UTC-5",team1:"Algeria",team2:"Austria",group:"Group J",ground:"Kansas City"},
+  {round:"Matchday 17",date:"2026-06-27",time:"21:00 UTC-5",team1:"Jordan",team2:"Argentina",group:"Group J",ground:"Dallas (Arlington)"},
+  {round:"Matchday 17",date:"2026-06-27",time:"19:00 UTC-5",team1:"DR Congo",team2:"Colombia",group:"Group K",ground:"Houston"},
+  {round:"Matchday 17",date:"2026-06-27",time:"19:00 UTC-5",team1:"Uzbekistan",team2:"Portugal",group:"Group K",ground:"Dallas (Arlington)"},
+  {round:"Matchday 17",date:"2026-06-27",time:"19:00 UTC-4",team1:"Panama",team2:"Croatia",group:"Group L",ground:"Miami (Miami Gardens)"},
+  {round:"Matchday 17",date:"2026-06-27",time:"19:00 UTC-4",team1:"Ghana",team2:"England",group:"Group L",ground:"New York/New Jersey (East Rutherford)"}
+];
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+async function init() {
+  const raw = await fetchMatches();
+  document.getElementById('loading-msg').style.display = 'none';
+
+  if (raw) {
+    allMatches = raw;
+    document.getElementById('last-updated').textContent =
+      new Date().toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+  } else {
+    allMatches = FALLBACK;
+    document.getElementById('last-updated').textContent = 'Offline \u2014 fixture data only';
+  }
+
+  renderPools();
+  renderCalendar();
+
+  // Auto-select today or most recent match day
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const dates = [...matchDates()].sort();
+  const past  = dates.filter(d => d <= todayStr);
+  const autoDate = past.length > 0 ? past[past.length - 1] : dates[0];
+  if (autoDate) {
+    selectedDate = autoDate;
+    const d = new Date(autoDate + 'T12:00:00');
+    calViewMonth = { year: d.getFullYear(), month: d.getMonth() };
+    renderCalendar();
+    renderDayMatches(autoDate);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
